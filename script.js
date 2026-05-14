@@ -179,7 +179,15 @@
     }
 
     function grandRow(rk) {
-        return groupOrder.reduce((acc, gid) => add(acc, groupRow(gid, rk)), zero());
+        // Deduplica por village ID — aldeia em múltiplos grupos conta apenas 1x
+        const seen = {}, unique = {};
+        for (const gid of groupOrder) {
+            const vils = groupData[gid]?.villages || {};
+            for (const vid in vils) {
+                if (!seen[vid]) { seen[vid] = true; unique[vid] = vils[vid]; }
+            }
+        }
+        return Object.values(unique).reduce((acc, v) => add(acc, villageRow(v, rk)), zero());
     }
 
     /* ─── Rendering ───────────────────────────────────────────────────── */
