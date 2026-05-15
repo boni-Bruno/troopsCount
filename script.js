@@ -223,7 +223,9 @@
     }
 
     function renderDialog() {
-        // Cabeçalho de colunas (ícones de unidades)
+        const KEY_SIZE = 'tc2_size';
+        const saved    = JSON.parse(localStorage.getItem(KEY_SIZE) || '{"w":900,"h":500}');
+
         const unitHeaders = unitTypes.map(u =>
             `<th class="tc-col-unit" title="${u}">
                 <img src="/graphic/unit/unit_${u}.png" style="width:21px;display:block;margin:auto;">
@@ -232,55 +234,47 @@
 
         const html = `
         <style>
-            #popup_box_tc       { width:fit-content !important; max-width:95vw !important;
-                                  max-height:88vh; overflow:hidden; box-sizing:border-box; }
-            .tc-wrap            { font-size:12px; }
-            .tc-titlebar        { display:flex;align-items:center;justify-content:space-between;
-                                  margin-bottom:6px; }
-            .tc-title           { font-size:14px;font-weight:bold;color:#6b3a10; }
-            .tc-scroll          { overflow:auto; max-height:calc(88vh - 55px); }
-
-            .tc-table           { border-collapse:collapse;table-layout:auto; }
+            #popup_box_tc      { overflow:hidden !important; box-sizing:border-box !important; }
+            .tc-wrap           { font-size:12px; display:flex; flex-direction:column; }
+            .tc-titlebar       { display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap; }
+            .tc-title          { font-size:14px;font-weight:bold;color:#6b3a10;margin-right:auto; }
+            .tc-size-label     { font-size:11px;color:#888; }
+            .tc-size-input     { width:52px;padding:1px 3px;font-size:11px;border:1px solid #aaa;border-radius:2px; }
+            .tc-scroll         { overflow:auto;flex:1; }
+            .tc-table          { border-collapse:collapse;table-layout:auto; }
             .tc-table th,
-            .tc-table td        { border:1px solid #c9a56a;padding:2px 4px;white-space:nowrap; }
-
-            .tc-table thead th  { background:#c1a264;color:#3d1c00;position:sticky;top:0;z-index:2; }
-            .tc-col-label       { min-width:150px;text-align:left; }
-            .tc-col-rowtype     { min-width:85px;text-align:left; }
-            .tc-col-unit        { min-width:28px;text-align:center; }
-            .tc-col-actions     { min-width:48px;text-align:center; }
-
-            .tc-grand-hdr  td   { background:#a67c2f;color:#fff;font-weight:bold;cursor:pointer; }
-            .tc-grand-row  td   { background:#e8d4a0; }
-            .tc-grand-sum  td   { background:#d9c07a;font-weight:bold;border-top:2px solid #a67c2f; }
-
-            .tc-group-hdr  td   { background:#d4a84b;color:#3d1c00;font-weight:bold;cursor:pointer; }
+            .tc-table td       { border:1px solid #c9a56a;padding:2px 4px;white-space:nowrap; }
+            .tc-table thead th { background:#c1a264;color:#3d1c00;position:sticky;top:0;z-index:2; }
+            .tc-col-label      { min-width:150px;text-align:left; }
+            .tc-col-rowtype    { min-width:85px;text-align:left; }
+            .tc-col-unit       { min-width:28px;text-align:center; }
+            .tc-col-actions    { min-width:48px;text-align:center; }
+            .tc-grand-hdr td   { background:#a67c2f;color:#fff;font-weight:bold;cursor:pointer; }
+            .tc-grand-row td   { background:#e8d4a0; }
+            .tc-grand-sum td   { background:#d9c07a;font-weight:bold;border-top:2px solid #a67c2f; }
+            .tc-group-hdr td   { background:#d4a84b;color:#3d1c00;font-weight:bold;cursor:pointer; }
             .tc-group-hdr:hover td { background:#ddb95c; }
-            .tc-group-row  td   { background:#fff5da; }
-            .tc-group-sum  td   { background:#f0e2be;font-weight:bold;border-top:2px solid #c9a56a; }
-
-            .tc-vil-hdr    td   { background:#faf3e0;cursor:pointer; }
+            .tc-group-row td   { background:#fff5da; }
+            .tc-group-sum td   { background:#f0e2be;font-weight:bold;border-top:2px solid #c9a56a; }
+            .tc-vil-hdr td     { background:#faf3e0;cursor:pointer; }
             .tc-vil-hdr:hover td { background:#f0e8cc; }
-            .tc-vil-row    td   { background:#fffdf5;font-size:11px; }
-            .tc-vil-sum    td   { background:#f5edcc;font-size:11px;font-weight:bold;
-                                  border-top:1px solid #c9a56a; }
-
-            .tc-num             { text-align:right; }
-            .tc-zero            { color:#ccc;text-align:right; }
-            .tc-exp             { margin-right:5px;font-size:10px;color:#666; }
-            .tc-btn             { cursor:pointer;padding:1px 5px;font-size:11px;border:1px solid #aaa;
-                                  border-radius:2px;background:#f4e4bc;line-height:1.4; }
-            .tc-btn:hover       { background:#e0c88a; }
-            .tc-resize-handle   { position:absolute;bottom:2px;right:2px;width:14px;height:14px;
-                                  cursor:se-resize;
-                                  background:linear-gradient(135deg,transparent 50%,#b09050 50%);
-                                  opacity:.5; }
-            .tc-resize-handle:hover { opacity:1; }
+            .tc-vil-row td     { background:#fffdf5;font-size:11px; }
+            .tc-vil-sum td     { background:#f5edcc;font-size:11px;font-weight:bold;border-top:1px solid #c9a56a; }
+            .tc-num            { text-align:right; }
+            .tc-zero           { color:#ccc;text-align:right; }
+            .tc-exp            { margin-right:5px;font-size:10px;color:#666; }
+            .tc-btn            { cursor:pointer;padding:1px 5px;font-size:11px;border:1px solid #aaa;
+                                 border-radius:2px;background:#f4e4bc;line-height:1.4; }
+            .tc-btn:hover      { background:#e0c88a; }
         </style>
-        <div class="tc-wrap">
+        <div class="tc-wrap" id="tc-wrap">
             <div class="tc-titlebar">
                 <span class="tc-title">🪖 ${SCRIPT}</span>
-                <button class="tc-btn" id="tc-btn-expand">⛶ Maximizar</button>
+                <span class="tc-size-label">Largura:</span>
+                <input class="tc-size-input" id="tc-inp-w" type="number" min="400" max="2000" value="${saved.w}">
+                <span class="tc-size-label">Altura:</span>
+                <input class="tc-size-input" id="tc-inp-h" type="number" min="200" max="1200" value="${saved.h}">
+                <button class="tc-btn" id="tc-btn-apply">✔ Aplicar</button>
             </div>
             <div class="tc-scroll" id="tc-scroll">
                 <table class="vis tc-table" id="tc-tbl">
@@ -295,62 +289,29 @@
                     <tbody id="tc-body"></tbody>
                 </table>
             </div>
-        </div>
-        <div class="tc-resize-handle" id="tc-resize"></div>`;
+        </div>`;
 
         Dialog.show('tc', html);
-        applyDynamicHeight();
-        makeResizable();
+        applySize(saved.w, saved.h);
         rebuildBody();
         bindEvents();
-    }
 
-    function applyDynamicHeight() { /* altura controlada por CSS calc */ }
-
-    function makeResizable() {
-        let maximized = false;
-
-        $('#tc-btn-expand').off('click').on('click', function () {
-            const $box = $('#popup_box_tc');
-            if (!maximized) {
-                $box.css({ width: '98vw', maxWidth: '98vw', height: '95vh', maxHeight: '95vh',
-                           position: 'fixed', top: '1vh', left: '1vw' });
-                $('#tc-scroll').css('max-height', 'calc(95vh - 55px)');
-                $(this).text('⛶ Restaurar');
-                maximized = true;
-            } else {
-                $box.css({ width: '', maxWidth: '', height: '', maxHeight: '',
-                           position: '', top: '', left: '' });
-                $('#tc-scroll').css('max-height', 'calc(88vh - 55px)');
-                $(this).text('⛶ Maximizar');
-                maximized = false;
-            }
-        });
-
-        const handle = document.getElementById('tc-resize');
-        if (!handle) return;
-        let startX, startY, startW, startH;
-
-        handle.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            const $box = $('#popup_box_tc');
-            startX = e.clientX; startY = e.clientY;
-            startW = $box[0].offsetWidth; startH = $box[0].offsetHeight;
-
-            function onMove(e) {
-                const w = Math.max(400, startW + e.clientX - startX);
-                const h = Math.max(200, startH + e.clientY - startY);
-                $box.css({ width: w + 'px', maxWidth: 'none', height: h + 'px', maxHeight: 'none' });
-                $('#tc-scroll').css('max-height', (h - 55) + 'px');
-            }
-            function onUp() {
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('mouseup', onUp);
-            }
-            document.addEventListener('mousemove', onMove);
-            document.addEventListener('mouseup', onUp);
+        $('#tc-btn-apply').on('click', function () {
+            const w = parseInt($('#tc-inp-w').val()) || 900;
+            const h = parseInt($('#tc-inp-h').val()) || 500;
+            localStorage.setItem(KEY_SIZE, JSON.stringify({ w, h }));
+            applySize(w, h);
         });
     }
+
+    function applySize(w, h) {
+        const TITLEBAR_H = 40; // px aproximados da barra de título + inputs
+        $('#popup_box_tc').css({ width: w + 'px', maxWidth: 'none', height: h + 'px', maxHeight: 'none' });
+        $('#tc-scroll').css({ height: (h - TITLEBAR_H) + 'px', maxHeight: 'none' });
+    }
+
+    function applyDynamicHeight() { /* não usado */ }
+    function makeResizable()      { /* não usado */ }
 
     /** Reconstrói somente o <tbody> sem recriar o Dialog inteiro */
     function rebuildBody() {
