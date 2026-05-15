@@ -223,9 +223,6 @@
     }
 
     function renderDialog() {
-        const KEY_SIZE = 'tc2_size';
-        const saved    = JSON.parse(localStorage.getItem(KEY_SIZE) || '{"w":900,"h":500}');
-
         const unitHeaders = unitTypes.map(u =>
             `<th class="tc-col-unit" title="${u}">
                 <img src="/graphic/unit/unit_${u}.png" style="width:21px;display:block;margin:auto;">
@@ -234,13 +231,13 @@
 
         const html = `
         <style>
-            #popup_box_tc      { overflow:hidden !important; box-sizing:border-box !important; }
-            .tc-wrap           { font-size:12px; display:flex; flex-direction:column; }
-            .tc-titlebar       { display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap; }
-            .tc-title          { font-size:14px;font-weight:bold;color:#6b3a10;margin-right:auto; }
-            .tc-size-label     { font-size:11px;color:#888; }
-            .tc-size-input     { width:52px;padding:1px 3px;font-size:11px;border:1px solid #aaa;border-radius:2px; }
-            .tc-scroll         { overflow:auto;flex:1; }
+            #popup_box_tc      { width:900px !important; height:500px !important;
+                                 overflow:hidden !important; box-sizing:border-box !important;
+                                 min-width:400px; min-height:200px; }
+            .tc-wrap           { height:100%;display:flex;flex-direction:column;font-size:12px; }
+            .tc-titlebar       { flex-shrink:0;padding-bottom:5px; }
+            .tc-title          { font-size:14px;font-weight:bold;color:#6b3a10; }
+            .tc-scroll         { flex:1;overflow:auto;min-height:0; }
             .tc-table          { border-collapse:collapse;table-layout:auto; }
             .tc-table th,
             .tc-table td       { border:1px solid #c9a56a;padding:2px 4px;white-space:nowrap; }
@@ -259,7 +256,8 @@
             .tc-vil-hdr td     { background:#faf3e0;cursor:pointer; }
             .tc-vil-hdr:hover td { background:#f0e8cc; }
             .tc-vil-row td     { background:#fffdf5;font-size:11px; }
-            .tc-vil-sum td     { background:#f5edcc;font-size:11px;font-weight:bold;border-top:1px solid #c9a56a; }
+            .tc-vil-sum td     { background:#f5edcc;font-size:11px;font-weight:bold;
+                                 border-top:1px solid #c9a56a; }
             .tc-num            { text-align:right; }
             .tc-zero           { color:#ccc;text-align:right; }
             .tc-exp            { margin-right:5px;font-size:10px;color:#666; }
@@ -267,14 +265,9 @@
                                  border-radius:2px;background:#f4e4bc;line-height:1.4; }
             .tc-btn:hover      { background:#e0c88a; }
         </style>
-        <div class="tc-wrap" id="tc-wrap">
+        <div class="tc-wrap">
             <div class="tc-titlebar">
-                <span class="tc-title">🪖 ${SCRIPT}</span>
-                <span class="tc-size-label">Largura:</span>
-                <input class="tc-size-input" id="tc-inp-w" type="number" min="400" max="2000" value="${saved.w}">
-                <span class="tc-size-label">Altura:</span>
-                <input class="tc-size-input" id="tc-inp-h" type="number" min="200" max="1200" value="${saved.h}">
-                <button class="tc-btn" id="tc-btn-apply">✔ Aplicar</button>
+                <span class="tc-title">&#129686; ${SCRIPT}</span>
             </div>
             <div class="tc-scroll" id="tc-scroll">
                 <table class="vis tc-table" id="tc-tbl">
@@ -292,26 +285,20 @@
         </div>`;
 
         Dialog.show('tc', html);
-        applySize(saved.w, saved.h);
+
+        // jQuery UI resizable — mesmo padrao das janelas do TW
+        $('#popup_box_tc').resizable({
+            handles: 'se',
+            minWidth: 400,
+            minHeight: 200,
+        });
+
         rebuildBody();
         bindEvents();
-
-        $('#tc-btn-apply').on('click', function () {
-            const w = parseInt($('#tc-inp-w').val()) || 900;
-            const h = parseInt($('#tc-inp-h').val()) || 500;
-            localStorage.setItem(KEY_SIZE, JSON.stringify({ w, h }));
-            applySize(w, h);
-        });
     }
 
-    function applySize(w, h) {
-        const TITLEBAR_H = 40; // px aproximados da barra de título + inputs
-        $('#popup_box_tc').css({ width: w + 'px', maxWidth: 'none', height: h + 'px', maxHeight: 'none' });
-        $('#tc-scroll').css({ height: (h - TITLEBAR_H) + 'px', maxHeight: 'none' });
-    }
-
-    function applyDynamicHeight() { /* não usado */ }
-    function makeResizable()      { /* não usado */ }
+    function applyDynamicHeight() {}
+    function makeResizable()      {}
 
     /** Reconstrói somente o <tbody> sem recriar o Dialog inteiro */
     function rebuildBody() {
