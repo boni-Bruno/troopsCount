@@ -50,27 +50,43 @@
                 const g = groups.find(x => String(x.group_id) === gid);
                 if (!g) continue;
                 groupData[gid] = { name: g.name, villages: {} };
+                updateLoading(`Carregando grupo: <strong>${g.name}</strong>...`);
                 await fetchGroupUnits(gid);
             }
 
             renderDialog();
         } catch (err) {
-            UI.ErrorMessage(`${SCRIPT}: erro ao carregar!`);
+            // Mostra o erro dentro do Dialog para fácil diagnóstico
+            const msg = err?.message || String(err);
+            Dialog.show('tc', `
+                <style>#popup_box_tc{width:760px !important;}</style>
+                <h3>🪖 ${SCRIPT} — Erro</h3>
+                <p style="color:red;padding:10px;"><strong>Erro:</strong> ${msg}</p>
+                <p style="font-size:11px;color:#888;">Veja o Console (F12) para detalhes.</p>`);
             console.error(`[${SCRIPT}]`, err);
         }
     }
 
     /* ─── Data fetching ───────────────────────────────────────────────── */
 
+    /** URL builder manual — funciona em qualquer tela do TW */
+    function twURL(screen, mode, params) {
+        let url = `game.php?village=${game_data.village.id}&screen=${screen}`;
+        if (mode) url += `&mode=${mode}`;
+        for (const [k, v] of Object.entries(params || {})) url += `&${k}=${encodeURIComponent(v)}`;
+        if (game_data.player.sitter > 0) url += `&t=${game_data.player.id}`;
+        return url;
+    }
+
     function fetchGroups() {
-        return $.get(TribalWars.buildURL('GET', 'groups', { ajax: 'load_group_menu' }))
+        return $.get(twURL('groups', null, { ajax: 'load_group_menu' }))
             .then(d => (d.result || []).filter(g => g.type !== 'separator'));
     }
 
     async function fetchGroupUnits(gid) {
         for (let page = 0; page <= MAX_PG; page++) {
-            const html  = await $.get(TribalWars.buildURL('GET', 'overview_villages', {
-                mode: 'units', group: gid, page,
+            const html  = await $.get(twURL('overview_villages', 'units', {
+                group: gid, page,
             }));
             parseUnitsPage($(html), gid);
             const hasNext = $(html).find(`.paged-nav-item[href*="page=${page + 1}"]`).length > 0;
@@ -196,9 +212,14 @@
         Dialog.show('tc', `
             <style>#popup_box_tc{width:760px !important;}</style>
             <h3>🪖 ${SCRIPT}</h3>
-            <p style="text-align:center;padding:30px;">
-                <img src="/graphic/index/indicator.gif"> Carregando tropas de todos os grupos...
+            <p id="tc-load-msg" style="text-align:center;padding:30px;">
+                Carregando tropas de todos os grupos...
             </p>`);
+    }
+
+    function updateLoading(msg) {
+        const el = document.getElementById('tc-load-msg');
+        if (el) el.innerHTML = msg;
     }
 
     function renderDialog() {
