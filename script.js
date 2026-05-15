@@ -232,58 +232,55 @@
 
         const html = `
         <style>
-            #popup_box_tc       { width:90vw !important; max-width:1400px; max-height:92vh; overflow:hidden; box-sizing:border-box; }
+            #popup_box_tc       { width:fit-content !important; max-width:95vw !important;
+                                  max-height:88vh; overflow:hidden; box-sizing:border-box; }
             .tc-wrap            { font-size:12px; }
-            .tc-titlebar        { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px; }
+            .tc-titlebar        { display:flex;align-items:center;justify-content:space-between;
+                                  margin-bottom:6px; }
             .tc-title           { font-size:14px;font-weight:bold;color:#6b3a10; }
-            .tc-scroll          { overflow:auto; }
+            .tc-scroll          { overflow:auto; max-height:calc(88vh - 55px); }
 
             .tc-table           { border-collapse:collapse;table-layout:auto; }
             .tc-table th,
             .tc-table td        { border:1px solid #c9a56a;padding:2px 4px;white-space:nowrap; }
 
-            /* sticky header */
             .tc-table thead th  { background:#c1a264;color:#3d1c00;position:sticky;top:0;z-index:2; }
-            .tc-col-label       { min-width:160px;text-align:left; }
-            .tc-col-rowtype     { min-width:90px;text-align:left; }
+            .tc-col-label       { min-width:150px;text-align:left; }
+            .tc-col-rowtype     { min-width:85px;text-align:left; }
             .tc-col-unit        { min-width:28px;text-align:center; }
-            .tc-col-actions     { min-width:52px;text-align:center; }
+            .tc-col-actions     { min-width:48px;text-align:center; }
 
-            /* Grand total */
             .tc-grand-hdr  td   { background:#a67c2f;color:#fff;font-weight:bold;cursor:pointer; }
             .tc-grand-row  td   { background:#e8d4a0; }
             .tc-grand-sum  td   { background:#d9c07a;font-weight:bold;border-top:2px solid #a67c2f; }
 
-            /* Grupo */
             .tc-group-hdr  td   { background:#d4a84b;color:#3d1c00;font-weight:bold;cursor:pointer; }
             .tc-group-hdr:hover td { background:#ddb95c; }
             .tc-group-row  td   { background:#fff5da; }
             .tc-group-sum  td   { background:#f0e2be;font-weight:bold;border-top:2px solid #c9a56a; }
 
-            /* Aldeia */
             .tc-vil-hdr    td   { background:#faf3e0;cursor:pointer; }
             .tc-vil-hdr:hover td { background:#f0e8cc; }
             .tc-vil-row    td   { background:#fffdf5;font-size:11px; }
-            .tc-vil-sum    td   { background:#f5edcc;font-size:11px;font-weight:bold;border-top:1px solid #c9a56a; }
+            .tc-vil-sum    td   { background:#f5edcc;font-size:11px;font-weight:bold;
+                                  border-top:1px solid #c9a56a; }
 
             .tc-num             { text-align:right; }
             .tc-zero            { color:#ccc;text-align:right; }
             .tc-exp             { margin-right:5px;font-size:10px;color:#666; }
-            .tc-btn             { cursor:pointer;padding:1px 4px;font-size:11px;border:1px solid #aaa;
+            .tc-btn             { cursor:pointer;padding:1px 5px;font-size:11px;border:1px solid #aaa;
                                   border-radius:2px;background:#f4e4bc;line-height:1.4; }
             .tc-btn:hover       { background:#e0c88a; }
-
-            /* Resize handle */
-            .tc-resize-handle   { position:absolute;bottom:0;right:0;width:16px;height:16px;
-                                  cursor:se-resize;background:linear-gradient(135deg,transparent 50%,#c9a56a 50%);
-                                  border-radius:0 0 4px 0; }
+            .tc-resize-handle   { position:absolute;bottom:2px;right:2px;width:14px;height:14px;
+                                  cursor:se-resize;
+                                  background:linear-gradient(135deg,transparent 50%,#b09050 50%);
+                                  opacity:.5; }
+            .tc-resize-handle:hover { opacity:1; }
         </style>
         <div class="tc-wrap">
             <div class="tc-titlebar">
                 <span class="tc-title">🪖 ${SCRIPT}</span>
-                <span>
-                    <button class="tc-btn" id="tc-btn-expand" title="Maximizar / Restaurar">⛶ Maximizar</button>
-                </span>
+                <button class="tc-btn" id="tc-btn-expand">⛶ Maximizar</button>
             </div>
             <div class="tc-scroll" id="tc-scroll">
                 <table class="vis tc-table" id="tc-tbl">
@@ -308,53 +305,43 @@
         bindEvents();
     }
 
-    /** Ajusta altura do scroll ao tamanho atual do popup */
-    function applyDynamicHeight() {
-        const $box    = $('#popup_box_tc');
-        const $scroll = $('#tc-scroll');
-        if (!$box.length || !$scroll.length) return;
-        // desconta titlebar (~36px) + padding (~20px)
-        const available = $box[0].clientHeight - 36 - 20;
-        $scroll.css('max-height', Math.max(200, available) + 'px');
-    }
+    function applyDynamicHeight() { /* altura controlada por CSS calc */ }
 
-    /** Botão maximizar + arrastar canto para redimensionar */
     function makeResizable() {
         let maximized = false;
 
-        // Botão ⛶ Maximizar
         $('#tc-btn-expand').off('click').on('click', function () {
             const $box = $('#popup_box_tc');
             if (!maximized) {
-                $box.css({ width: '98vw', maxWidth: '98vw', top: '1vh', left: '1vw', position: 'fixed' });
+                $box.css({ width: '98vw', maxWidth: '98vw', height: '95vh', maxHeight: '95vh',
+                           position: 'fixed', top: '1vh', left: '1vw' });
+                $('#tc-scroll').css('max-height', 'calc(95vh - 55px)');
                 $(this).text('⛶ Restaurar');
                 maximized = true;
             } else {
-                $box.css({ width: '90vw', maxWidth: '1400px', top: '', left: '', position: '' });
+                $box.css({ width: '', maxWidth: '', height: '', maxHeight: '',
+                           position: '', top: '', left: '' });
+                $('#tc-scroll').css('max-height', 'calc(88vh - 55px)');
                 $(this).text('⛶ Maximizar');
                 maximized = false;
             }
-            applyDynamicHeight();
         });
 
-        // Handle de resize no canto inferior-direito
         const handle = document.getElementById('tc-resize');
         if (!handle) return;
-        let startX, startY, startW, startH, $box;
+        let startX, startY, startW, startH;
 
         handle.addEventListener('mousedown', function (e) {
             e.preventDefault();
-            $box   = $('#popup_box_tc');
-            startX = e.clientX;
-            startY = e.clientY;
-            startW = $box[0].offsetWidth;
-            startH = $box[0].offsetHeight;
+            const $box = $('#popup_box_tc');
+            startX = e.clientX; startY = e.clientY;
+            startW = $box[0].offsetWidth; startH = $box[0].offsetHeight;
 
             function onMove(e) {
                 const w = Math.max(400, startW + e.clientX - startX);
                 const h = Math.max(200, startH + e.clientY - startY);
                 $box.css({ width: w + 'px', maxWidth: 'none', height: h + 'px', maxHeight: 'none' });
-                applyDynamicHeight();
+                $('#tc-scroll').css('max-height', (h - 55) + 'px');
             }
             function onUp() {
                 document.removeEventListener('mousemove', onMove);
