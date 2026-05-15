@@ -231,13 +231,13 @@
 
         const html = `
         <style>
-            #popup_box_tc      { width:900px !important; height:500px !important;
-                                 overflow:hidden !important; box-sizing:border-box !important;
-                                 min-width:400px; min-height:200px; }
-            .tc-wrap           { height:100%;display:flex;flex-direction:column;font-size:12px; }
-            .tc-titlebar       { flex-shrink:0;padding-bottom:5px; }
-            .tc-title          { font-size:14px;font-weight:bold;color:#6b3a10; }
-            .tc-scroll         { flex:1;overflow:auto;min-height:0; }
+            /* Popup cresce com o conteudo, maximo 90% da tela */
+            #popup_box_tc      { width:auto !important; max-width:96vw !important;
+                                 height:auto !important; max-height:90vh !important;
+                                 overflow:auto !important; box-sizing:border-box !important; }
+            .tc-wrap           { font-size:12px; }
+            .tc-title          { font-size:14px;font-weight:bold;color:#6b3a10;margin-bottom:6px; }
+            /* Tabela determina a largura, sem scroll wrapper fixo */
             .tc-table          { border-collapse:collapse;table-layout:auto; }
             .tc-table th,
             .tc-table td       { border:1px solid #c9a56a;padding:2px 4px;white-space:nowrap; }
@@ -266,33 +266,21 @@
             .tc-btn:hover      { background:#e0c88a; }
         </style>
         <div class="tc-wrap">
-            <div class="tc-titlebar">
-                <span class="tc-title">&#129686; ${SCRIPT}</span>
-            </div>
-            <div class="tc-scroll" id="tc-scroll">
-                <table class="vis tc-table" id="tc-tbl">
-                    <thead>
-                        <tr>
-                            <th class="tc-col-label">Grupo / Aldeia</th>
-                            <th class="tc-col-rowtype">Linha</th>
-                            ${unitHeaders}
-                            <th class="tc-col-actions"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="tc-body"></tbody>
-                </table>
-            </div>
+            <div class="tc-title">Troop Counter</div>
+            <table class="vis tc-table" id="tc-tbl">
+                <thead>
+                    <tr>
+                        <th class="tc-col-label">Grupo / Aldeia</th>
+                        <th class="tc-col-rowtype">Linha</th>
+                        ${unitHeaders}
+                        <th class="tc-col-actions"></th>
+                    </tr>
+                </thead>
+                <tbody id="tc-body"></tbody>
+            </table>
         </div>`;
 
         Dialog.show('tc', html);
-
-        // jQuery UI resizable — mesmo padrao das janelas do TW
-        $('#popup_box_tc').resizable({
-            handles: 'se',
-            minWidth: 400,
-            minHeight: 200,
-        });
-
         rebuildBody();
         bindEvents();
     }
