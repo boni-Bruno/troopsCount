@@ -232,10 +232,11 @@
 
         const html = `
         <style>
-            #popup_box_tc       { width:780px !important; max-height:92vh; overflow:hidden; }
+            #popup_box_tc       { width:90vw !important; max-width:1400px; max-height:92vh; overflow:hidden; box-sizing:border-box; }
             .tc-wrap            { font-size:12px; }
-            .tc-title           { font-size:14px;font-weight:bold;margin-bottom:8px;color:#6b3a10; }
-            .tc-scroll          { max-height:75vh;overflow:auto; }
+            .tc-titlebar        { display:flex;align-items:center;justify-content:space-between;margin-bottom:8px; }
+            .tc-title           { font-size:14px;font-weight:bold;color:#6b3a10; }
+            .tc-scroll          { overflow:auto; }
 
             .tc-table           { border-collapse:collapse;table-layout:auto; }
             .tc-table th,
@@ -271,10 +272,20 @@
             .tc-btn             { cursor:pointer;padding:1px 4px;font-size:11px;border:1px solid #aaa;
                                   border-radius:2px;background:#f4e4bc;line-height:1.4; }
             .tc-btn:hover       { background:#e0c88a; }
+
+            /* Resize handle */
+            .tc-resize-handle   { position:absolute;bottom:0;right:0;width:16px;height:16px;
+                                  cursor:se-resize;background:linear-gradient(135deg,transparent 50%,#c9a56a 50%);
+                                  border-radius:0 0 4px 0; }
         </style>
         <div class="tc-wrap">
-            <div class="tc-title">🪖 ${SCRIPT}</div>
-            <div class="tc-scroll">
+            <div class="tc-titlebar">
+                <span class="tc-title">🪖 ${SCRIPT}</span>
+                <span>
+                    <button class="tc-btn" id="tc-btn-expand" title="Maximizar / Restaurar">⛶ Maximizar</button>
+                </span>
+            </div>
+            <div class="tc-scroll" id="tc-scroll">
                 <table class="vis tc-table" id="tc-tbl">
                     <thead>
                         <tr>
@@ -287,11 +298,71 @@
                     <tbody id="tc-body"></tbody>
                 </table>
             </div>
-        </div>`;
+        </div>
+        <div class="tc-resize-handle" id="tc-resize"></div>`;
 
         Dialog.show('tc', html);
+        applyDynamicHeight();
+        makeResizable();
         rebuildBody();
         bindEvents();
+    }
+
+    /** Ajusta altura do scroll ao tamanho atual do popup */
+    function applyDynamicHeight() {
+        const $box    = $('#popup_box_tc');
+        const $scroll = $('#tc-scroll');
+        if (!$box.length || !$scroll.length) return;
+        // desconta titlebar (~36px) + padding (~20px)
+        const available = $box[0].clientHeight - 36 - 20;
+        $scroll.css('max-height', Math.max(200, available) + 'px');
+    }
+
+    /** Botão maximizar + arrastar canto para redimensionar */
+    function makeResizable() {
+        let maximized = false;
+
+        // Botão ⛶ Maximizar
+        $('#tc-btn-expand').off('click').on('click', function () {
+            const $box = $('#popup_box_tc');
+            if (!maximized) {
+                $box.css({ width: '98vw', maxWidth: '98vw', top: '1vh', left: '1vw', position: 'fixed' });
+                $(this).text('⛶ Restaurar');
+                maximized = true;
+            } else {
+                $box.css({ width: '90vw', maxWidth: '1400px', top: '', left: '', position: '' });
+                $(this).text('⛶ Maximizar');
+                maximized = false;
+            }
+            applyDynamicHeight();
+        });
+
+        // Handle de resize no canto inferior-direito
+        const handle = document.getElementById('tc-resize');
+        if (!handle) return;
+        let startX, startY, startW, startH, $box;
+
+        handle.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            $box   = $('#popup_box_tc');
+            startX = e.clientX;
+            startY = e.clientY;
+            startW = $box[0].offsetWidth;
+            startH = $box[0].offsetHeight;
+
+            function onMove(e) {
+                const w = Math.max(400, startW + e.clientX - startX);
+                const h = Math.max(200, startH + e.clientY - startY);
+                $box.css({ width: w + 'px', maxWidth: 'none', height: h + 'px', maxHeight: 'none' });
+                applyDynamicHeight();
+            }
+            function onUp() {
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('mouseup', onUp);
+            }
+            document.addEventListener('mousemove', onMove);
+            document.addEventListener('mouseup', onUp);
+        });
     }
 
     /** Reconstrói somente o <tbody> sem recriar o Dialog inteiro */
